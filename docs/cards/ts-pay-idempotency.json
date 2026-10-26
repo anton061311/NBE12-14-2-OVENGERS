@@ -1,0 +1,47 @@
+{
+  "flow": {
+    "columns": [
+      "키 조회",
+      "조건부 UPDATE",
+      "조건부 UPDATE"
+    ],
+    "lanes": [
+      {
+        "label": "요청 A",
+        "state": "저장된 응답 없음",
+        "action": {
+          "col": 2,
+          "text": "차감 + 확정",
+          "color": "blue"
+        },
+        "result": {
+          "text": "1행 → 200"
+        }
+      },
+      {
+        "label": "요청 B",
+        "state": "저장된 응답 없음",
+        "action": {
+          "col": 3,
+          "text": "차감 + 확정",
+          "color": "red"
+        },
+        "result": {
+          "text": "0행 → 409"
+        }
+      }
+    ],
+    "code": "status = 'HELD' AND now < hold_expires_at",
+    "caption": "같은 키로 다시 요청하면 저장된 200 응답을 돌려줍니다"
+  },
+  "title": "",
+  "problem": {
+    "text": ""
+  },
+  "choice": {
+    "text": ""
+  },
+  "verify": {
+    "text": ""
+  }
+}

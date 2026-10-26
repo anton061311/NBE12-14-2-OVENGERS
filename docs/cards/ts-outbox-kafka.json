@@ -1,0 +1,48 @@
+{
+  "flow": {
+    "columns": [
+      "취소 커밋",
+      "Kafka 장애",
+      "브로커 복구"
+    ],
+    "lanes": [
+      {
+        "label": "직접 발행",
+        "state": "취소 성공",
+        "action": {
+          "col": 2,
+          "text": "발행 실패",
+          "color": "red"
+        },
+        "result": {
+          "text": "알림 유실"
+        }
+      },
+      {
+        "label": "Outbox",
+        "state": "취소 + outbox 행",
+        "action": {
+          "col": 3,
+          "text": "relay 재발행",
+          "color": "blue"
+        },
+        "result": {
+          "text": "약 40초 내 발행"
+        }
+      }
+    ],
+    "code": "상태 전이와 outbox_event INSERT를 같은 트랜잭션에",
+    "caption": "중복 전달은 컨슈머가 processed_event로 흡수합니다",
+    "db_label": "알림"
+  },
+  "title": "",
+  "problem": {
+    "text": ""
+  },
+  "choice": {
+    "text": ""
+  },
+  "verify": {
+    "text": ""
+  }
+}

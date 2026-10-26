@@ -1,0 +1,47 @@
+{
+  "flow": {
+    "columns": [
+      "가용 조회",
+      "슬롯 INSERT",
+      "슬롯 INSERT"
+    ],
+    "lanes": [
+      {
+        "label": "요청 A",
+        "state": "빈 슬롯",
+        "action": {
+          "col": 2,
+          "text": "HOLD",
+          "color": "blue"
+        },
+        "result": {
+          "text": "201 Created"
+        }
+      },
+      {
+        "label": "요청 B",
+        "state": "빈 슬롯",
+        "action": {
+          "col": 3,
+          "text": "HOLD",
+          "color": "red"
+        },
+        "result": {
+          "text": "409 Conflict"
+        }
+      }
+    ],
+    "code": "UNIQUE (space_id, slot_start)",
+    "caption": "조회 결과는 참고값, 최종 판정은 DB 제약이 합니다"
+  },
+  "title": "",
+  "problem": {
+    "text": ""
+  },
+  "choice": {
+    "text": ""
+  },
+  "verify": {
+    "text": ""
+  }
+}

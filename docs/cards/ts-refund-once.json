@@ -1,0 +1,47 @@
+{
+  "flow": {
+    "columns": [
+      "조회",
+      "UPDATE",
+      "UPDATE"
+    ],
+    "lanes": [
+      {
+        "label": "본인 취소",
+        "state": "CONFIRMED",
+        "action": {
+          "col": 2,
+          "text": "취소 전이",
+          "color": "blue"
+        },
+        "result": {
+          "text": "1행 → 환불"
+        }
+      },
+      {
+        "label": "강제 취소",
+        "state": "CONFIRMED",
+        "action": {
+          "col": 3,
+          "text": "취소 전이",
+          "color": "red"
+        },
+        "result": {
+          "text": "0행 → 409"
+        }
+      }
+    ],
+    "code": "WHERE id = ? AND status = 조회한 상태",
+    "caption": "이긴 쪽만 슬롯 반환·키 폐기·환불을 같은 트랜잭션에서 처리"
+  },
+  "title": "",
+  "problem": {
+    "text": ""
+  },
+  "choice": {
+    "text": ""
+  },
+  "verify": {
+    "text": ""
+  }
+}
