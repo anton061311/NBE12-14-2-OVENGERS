@@ -15,17 +15,17 @@
 | 부하 테스트 | k6로 VU별 처리량·지연 측정, 부하 생성기는 별도 EC2로 분리, HikariCP 병목 가설 검증 | 아래 트러블슈팅 5 |
 | 빈자리 대기·알림 (2차 이후) | 대기 신청(중복은 UNIQUE로 판정), 슬롯이 풀리면 대기자 전원 알림 + 선착순, 알림함·미읽음 배지 | [`waitlist.md`](docs/decisions/waitlist.md), `waitlist`, `notification` |
 | Outbox + Kafka (2차 이후) | 슬롯이 풀리는 3곳에서 상태 전이와 같은 트랜잭션에 이벤트 기록 → relay → Kafka → 멱등 컨슈머 | [`outbox-kafka.md`](docs/decisions/outbox-kafka.md), `outbox` |
+| PG 크레딧 충전 (3차 확장) | 토스페이먼츠 테스트 키 연동(주문서형 결제위젯), 서버 승인과 승인 멱등성, 결제 조회로 상태를 맞추는 복구 스케줄러, 충전 화면 | [`pg-charge.md`](docs/decisions/pg-charge.md), `credit/pg`, `credit/scheduler` |
 | 인기 오피스 랭킹 (2차 이후) | 끝난 기간만 매일 00:01에 계산해 확정 스냅샷으로 저장, 매출은 크레딧 원장 기준 현금주의 | [`space-ranking.md`](docs/decisions/space-ranking.md), `stats` |
 | 발표 | 최종 발표 자료 제작과 발표 | |
 
-"2차 이후"는 2차 발표(10/01) 뒤 10/15 ~ 10/18에 추가한 기능입니다.
+"2차 이후"는 2차 발표(10/01) 뒤 10/15 ~ 10/18에 추가한 기능입니다. PG 충전은 3차 확장으로 시작해 기능 동결 커밋에 포함됐습니다.
 
 ## 🏗️ 시스템 아키텍처
 
-<!-- IMAGE-SLOT: architecture-3d -->
-> 🖼️ 이미지 준비 중: `docs/img/architecture-3d.png`
+![Browser가 CloudFront를 거쳐 S3의 정적 프론트와 EC2의 Spring Boot로 가고, Spring Boot는 RDS MySQL과 같은 EC2의 Kafka를 쓰며, GitHub Actions가 EC2와 S3에 배포하는 AWS 아키텍처. 주황 테두리가 본인 담당](docs/img/architecture-3d.png)
 
-프론트는 정적 export로 S3에 올려 CloudFront로 서빙하고, `/api/*` 요청만 CloudFront가 EC2의 Spring Boot로 넘깁니다. 2026-10-17부터 EC2(c7i-flex.large)에 docker compose로 Kafka(KRaft 단일 노드)를 함께 띄워 Outbox relay와 컨슈머를 켰습니다. 계층별 상세는 [시스템 아키텍처 문서](docs/architecture/system-architecture.md)에 있습니다.
+프론트는 정적 export로 S3에 올려 CloudFront로 서빙하고, `/api/*` 요청만 CloudFront가 EC2의 Spring Boot로 넘깁니다. 2026-10-17부터 EC2(c7i-flex.large)에 docker compose로 Kafka(KRaft 단일 노드)를 함께 띄워 Outbox relay와 컨슈머를 켰습니다. 주황 테두리 중 Spring Boot는 앱 전체가 아니라 그 안의 예약·Outbox 영역을 뜻합니다. 계층별 상세는 [시스템 아키텍처 문서](docs/architecture/system-architecture.md)에 있습니다.
 
 ## 📡 주요 API
 
@@ -40,6 +40,7 @@ Base URL `/api/v1` · 인증은 `Authorization: Bearer {accessToken}`
 | `POST` | `/admin/reservations/{id}/force-cancel` | 관리자 강제 취소 (위약금 없이 전액 환불) |
 | `POST` | `/waitlist` | 빈자리 대기 신청 |
 | `GET` | `/notifications/unread-count` | 미읽음 알림 수 |
+| `POST` | `/credits/charge-orders/confirm` | PG 충전 승인 |
 | `GET` | `/stats/space-ranking` | 인기 오피스 랭킹 |
 
 전체 명세는 [API 명세](docs/api/api-spec.md)와 로컬 Swagger UI(`/swagger-ui/index.html`)에 있습니다.
@@ -148,7 +149,7 @@ Base URL `/api/v1` · 인증은 `Authorization: Bearer {accessToken}`
 
 | 구성원 | 담당 |
 | --- | --- |
-| **이태호** | **예약 도메인(HOLD 2단계, 슬롯 동시성, 결제 멱등성, 연장, 취소·환불), 배포·CI/CD, 부하 테스트, 대기·알림, Outbox + Kafka, 랭킹, 발표** |
+| **이태호** | **예약 도메인(HOLD 2단계, 슬롯 동시성, 결제 멱등성, 연장, 취소·환불), 배포·CI/CD, 부하 테스트, 대기·알림, Outbox + Kafka, 랭킹, PG 크레딧 충전, 발표** |
 | 김재철 | 공간 도메인 CRUD, 공간 대표 사진 업로드, 관리자 감사 로그 API |
 | 박창현 | 출입 도메인, 출입 키 발급·폐기, 모의 출입 검증 |
 | 백한비 | 크레딧 원장, 예약 상태 전이 이력 |
@@ -169,6 +170,7 @@ Base URL `/api/v1` · 인증은 `Authorization: Bearer {accessToken}`
 | --- | --- |
 | Backend | Java 21, Spring Boot 3.3.4, Spring Security 6.3, JJWT, Spring Data JPA, Flyway |
 | Database | MySQL 8.4 |
+| Payment | Toss Payments SDK v2 (테스트 키), Core API |
 | Messaging | Spring Kafka, Kafka (KRaft 단일 노드, docker compose) |
 | Test | JUnit 5, Mockito, Testcontainers MySQL, k6 |
 | Frontend | Next.js 16 (정적 export), React 19, TypeScript, Tailwind CSS |
